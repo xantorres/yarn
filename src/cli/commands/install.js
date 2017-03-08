@@ -52,6 +52,7 @@ type Flags = {
   lockfile: boolean,
   pureLockfile: boolean,
   skipIntegrityCheck: boolean,
+  skipInstalled: boolean,
 
   // add
   peer: boolean,
@@ -121,6 +122,7 @@ function normalizeFlags(config: Config, rawFlags: Object): Flags {
     skipIntegrityCheck: !!rawFlags.skipIntegrityCheck,
     frozenLockfile: !!rawFlags.frozenLockfile,
     linkDuplicates: !!rawFlags.linkDuplicates,
+    skipInstalled: !!rawFlags.skipInstalled,
 
     // add
     peer: !!rawFlags.peer,
@@ -394,7 +396,7 @@ export class Install {
       // remove integrity hash to make this operation atomic
       await this.integrityChecker.removeIntegrityFile();
       this.reporter.step(curr, total, this.reporter.lang('linkingDependencies'), emoji.get('link'));
-      await this.linker.init(patterns, this.flags.linkDuplicates);
+      await this.linker.init(patterns, this.flags.linkDuplicates, this.flags.skipInstalled);
     });
 
     steps.push(async (curr: number, total: number) => {

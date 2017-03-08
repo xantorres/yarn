@@ -118,7 +118,7 @@ export default class PackageLinker {
     return Promise.resolve(hoister.init());
   }
 
-  async copyModules(patterns: Array<string>, linkDuplicates: boolean): Promise<void> {
+  async copyModules(patterns: Array<string>, linkDuplicates: boolean, skipInstalled: boolean): Promise<void> {
     let flatTree = await this.getFlatHoistedTree(patterns);
 
     // sorted tree makes file creation and copying not to interfere with each other
@@ -133,11 +133,21 @@ export default class PackageLinker {
     const hardlinkQueue: Map<string, CopyQueueItem> = new Map();
     const hardlinksEnabled = linkDuplicates && await fs.hardlinksWork(this.config.cwd);
 
+    const alreadyInstalledModules = new Set();
     const copiedSrcs: Map<string, string> = new Map();
     for (const [dest, {pkg, loc: src}] of flatTree) {
       const ref = pkg._reference;
       invariant(ref, 'expected package reference');
       ref.setLocation(dest);
+
+      if (skipInstalled && dest) {
+        // If the package is installed and is the exact same version, skip
+        const packageObj = await fs.tryReadJson(path.join(dest, 'package.json'));
+        if (packageObj && packageObj.version == ref.version) {
+          alreadyInstalledModules.add(path.normalize(dest));
+          continue;
+        }
+      }
 
       // get a list of build artifacts contained in this module so we can prevent them from being marked as
       // extraneous
@@ -173,6 +183,12 @@ export default class PackageLinker {
       }
     }
 
+    if (alreadyInstalledModules.size) {
+      this.reporter.verbose(
+        this.reporter.lang('skippingExisting', alreadyInstalledModules.size),
+      );
+    }
+
     // keep track of all scoped paths to remove empty scopes after copy
     const scopedPaths = new Set();
 
@@ -193,10 +209,14 @@ export default class PackageLinker {
               possibleExtraneous.add(path.join(filepath, subfile));
             }
           } else {
-            possibleExtraneous.add(filepath);
+            possibleExtraneous.add(path.normalize(filepath));
           }
         }
       }
+    }
+
+    for (const loc of alreadyInstalledModules) {
+      possibleExtraneous.delete(loc);
     }
 
     // linked modules
@@ -308,9 +328,9 @@ export default class PackageLinker {
     return range === '*' || semver.satisfies(version, range, this.config.looseSemver);
   }
 
-  async init(patterns: Array<string>, linkDuplicates: boolean): Promise<void> {
+  async init(patterns: Array<string>, linkDuplicates: boolean, skipInstalled: boolean): Promise<void> {
     this.resolvePeerModules();
-    await this.copyModules(patterns, linkDuplicates);
+    await this.copyModules(patterns, linkDuplicates, skipInstalled);
     await this.saveAll(patterns);
   }
 

@@ -588,6 +588,13 @@ export async function readJson(loc: string): Promise<Object> {
   return (await readJsonAndFile(loc)).object;
 }
 
+export async function tryReadJson(loc: string): Promise<Object> {
+  if (await exists(loc)) {
+    return await readJson(loc);
+  }
+  return null;
+}
+
 export async function readJsonAndFile(loc: string): Promise<{
   object: Object,
   content: string,

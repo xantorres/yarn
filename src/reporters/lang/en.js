@@ -262,6 +262,7 @@ const messages = {
 
   lockfileExists: 'Lockfile already exists, not importing.',
   skippingImport: 'Skipping import of $0 for $1',
+  skippingExisting: 'Skipping copy of $0 already installed modules',
   importFailed: 'Import of $0 for $1 failed, resolving normally.',
   importResolveFailed: 'Import of $0 failed starting in $1',
   importResolvedRangeMatch: 'Using version $0 of $1 instead of $2 for $3',
