@@ -17,6 +17,7 @@ export function setFlags(commander: Object) {
   commander.usage('upgrade-interactive');
   commander.option('-E, --exact', 'install exact version');
   commander.option('-T, --tilde', 'install most recent release with the same minor version');
+  commander.option('-S, --skip-installed', 'skip copy of already installed modules');
 }
 
 type InquirerResponses<K, T> = {[key: K]: Array<T>};

@@ -188,6 +188,7 @@ export function setFlags(commander: Object) {
   commander.option('-O, --optional', 'save package to your `optionalDependencies`');
   commander.option('-E, --exact', 'install exact version');
   commander.option('-T, --tilde', 'install most recent release with the same minor version');
+  commander.option('-S, --skip-installed', 'skip copy of already installed modules');
 }
 
 export async function run(
